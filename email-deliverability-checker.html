@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyseur de Déliverabilité Email</title>
+    <link rel="stylesheet" href="email-deliverability-checker.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Analyseur de Déliverabilité Email</h1>
+            <p>Vérifiez la qualité de vos emails HTML pour optimiser leur déliverabilité</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📧</div>
+                <h2>Uploadez votre email HTML</h2>
+                <p>Glissez-déposez votre fichier HTML ou cliquez pour parcourir</p>
+                <input type="file" id="file-input" accept=".html,.htm" hidden>
+                <button class="btn-upload" id="browse-btn">Parcourir les fichiers</button>
+            </div>
+
+            <div class="file-info" id="file-info" style="display: none;">
+                <div class="file-details">
+                    <span class="file-name" id="file-name"></span>
+                    <span class="file-size" id="file-size"></span>
+                </div>
+                <button class="btn-analyze" id="analyze-btn">Analyser</button>
+            </div>
+        </div>
+
+        <div class="results-section" id="results-section" style="display: none;">
+            <div class="score-card">
+                <div class="score-circle" id="score-circle">
+                    <div class="score-value" id="score-value">0</div>
+                    <div class="score-label">/ 100</div>
+                </div>
+                <div class="score-status" id="score-status"></div>
+            </div>
+
+            <div class="analysis-details">
+                <h2>Détails de l'analyse</h2>
+
+                <div class="category" id="structure-category">
+                    <div class="category-header">
+                        <h3>Structure HTML</h3>
+                        <span class="category-score" id="structure-score"></span>
+                    </div>
+                    <div class="category-items" id="structure-items"></div>
+                </div>
+
+                <div class="category" id="content-category">
+                    <div class="category-header">
+                        <h3>Contenu et Spam</h3>
+                        <span class="category-score" id="content-score"></span>
+                    </div>
+                    <div class="category-items" id="content-items"></div>
+                </div>
+
+                <div class="category" id="images-category">
+                    <div class="category-header">
+                        <h3>Images et Médias</h3>
+                        <span class="category-score" id="images-score"></span>
+                    </div>
+                    <div class="category-items" id="images-items"></div>
+                </div>
+
+                <div class="category" id="links-category">
+                    <div class="category-header">
+                        <h3>Liens et CTA</h3>
+                        <span class="category-score" id="links-score"></span>
+                    </div>
+                    <div class="category-items" id="links-items"></div>
+                </div>
+
+                <div class="category" id="performance-category">
+                    <div class="category-header">
+                        <h3>Performance</h3>
+                        <span class="category-score" id="performance-score"></span>
+                    </div>
+                    <div class="category-items" id="performance-items"></div>
+                </div>
+            </div>
+
+            <div class="recommendations">
+                <h2>Recommandations Prioritaires</h2>
+                <div id="recommendations-list"></div>
+            </div>
+
+            <button class="btn-reset" id="reset-btn">Analyser un autre email</button>
+        </div>
+    </div>
+
+    <script src="email-deliverability-checker.js"></script>
+</body>
+</html>
