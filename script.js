@@ -849,7 +849,10 @@ function analyzeCompliance() {
         title: 'Identification de l\'expéditeur',
         description: hasFromIdentification
             ? 'Expéditeur identifiable - Transparence pour les destinataires'
-            : 'Clarifiez l\'identité de l\'expéditeur dans l\'email'
+            : 'Identifiez clairement l\'expéditeur en ajoutant : une balise &lt;meta name="from" content="Votre entreprise"&gt;, ou une mention "De la part de..." / "Envoyé par..." dans le contenu',
+        pdfDescription: hasFromIdentification
+            ? 'Expéditeur identifiable - Transparence pour les destinataires'
+            : 'Identifiez clairement l\'expéditeur en ajoutant : une balise HTML qui identifie votre entreprise, ou une mention "De la part de..." / "Envoyé par..." dans le contenu'
     });
     if (hasFromIdentification) score += 15;
 
@@ -1073,6 +1076,16 @@ exportPdfBtn.addEventListener('click', () => {
         const contentWidth = pageWidth - 2 * margin;
         let y = margin;
 
+        // Fonction pour décoder les entités HTML
+        const decodeHTML = (html) => {
+            return html
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#039;/g, "'")
+                .replace(/&amp;/g, '&');
+        };
+
         // Fonction pour ajouter une nouvelle page
         const checkPageBreak = (neededSpace) => {
             if (y + neededSpace > pageHeight - margin) {
@@ -1150,7 +1163,8 @@ exportPdfBtn.addEventListener('click', () => {
             // Calculer l'espace total nécessaire pour la catégorie
             let categoryHeight = 12 + 16; // En-tête + marge
             categoryData.checks.forEach(check => {
-                const descLines = doc.splitTextToSize(check.description, contentWidth - 12);
+                const description = check.pdfDescription || check.description;
+                const descLines = doc.splitTextToSize(description, contentWidth - 12);
                 categoryHeight += 6 + (descLines.length * 3.5) + 2;
             });
             categoryHeight += 5; // Marge finale
@@ -1194,7 +1208,8 @@ exportPdfBtn.addEventListener('click', () => {
                 y += 5;
 
                 // Description
-                const descLines = doc.splitTextToSize(check.description, contentWidth - 12);
+                const description = check.pdfDescription || check.description;
+                const descLines = doc.splitTextToSize(description, contentWidth - 12);
                 doc.setFontSize(8);
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(60, 60, 60);
