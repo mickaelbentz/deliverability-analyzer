@@ -884,6 +884,9 @@ function displayResults(results) {
          results.compliance.score / results.compliance.maxScore) / 5 * 100
     );
 
+    // Sauvegarder pour l'export PDF
+    saveResultsForExport(results, totalScore);
+
     // Afficher le score
     const scoreCircle = document.getElementById('score-circle');
     const scoreValue = document.getElementById('score-value');
@@ -991,7 +994,7 @@ function generateRecommendations(results) {
         recommendationsList.innerHTML = '<p style="color: #4CAF50; font-weight: 600;">🎉 Aucune recommandation - Votre email respecte toutes les bonnes pratiques de déliverabilité !</p>';
     } else {
         recommendationsList.innerHTML = recommendations.slice(0, 8).map(rec => `
-            <div class="recommendation-item">
+            <div class="recommendation-item ${rec.priority}">
                 <div class="recommendation-priority ${rec.priority}">${rec.priority.toUpperCase()}</div>
                 <div class="recommendation-text">${rec.text}</div>
             </div>
@@ -1036,3 +1039,319 @@ function formatFileSize(bytes) {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
+
+// Export PDF
+const exportPdfBtn = document.getElementById('export-pdf-btn');
+let currentResults = null;
+let currentTotalScore = 0;
+let currentFileName = '';
+
+// Sauvegarder les résultats lors de l'affichage
+function saveResultsForExport(results, totalScore) {
+    currentResults = results;
+    currentTotalScore = totalScore;
+    currentFileName = fileName.textContent || 'email.html';
+}
+
+exportPdfBtn.addEventListener('click', () => {
+    if (!currentResults) {
+        alert('Aucun résultat à exporter');
+        return;
+    }
+
+    // Désactiver le bouton pendant l'export
+    exportPdfBtn.disabled = true;
+    exportPdfBtn.textContent = 'Génération en cours...';
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        const contentWidth = pageWidth - 2 * margin;
+        let y = margin;
+
+        // Fonction pour ajouter une nouvelle page
+        const checkPageBreak = (neededSpace) => {
+            if (y + neededSpace > pageHeight - margin) {
+                doc.addPage();
+                y = margin;
+                return true;
+            }
+            return false;
+        };
+
+        // En-tête avec fond bleu (plus compact)
+        doc.setFillColor(9, 104, 172);
+        doc.rect(0, 0, pageWidth, 35, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont(undefined, 'bold');
+        doc.text('Rapport d\'Analyse Email', margin, 15);
+
+        // Retirer les emojis du nom de fichier
+        const cleanFileName = currentFileName.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Fichier : ${cleanFileName}`, margin, 26);
+
+        y = 45;
+
+        // Score global avec encadré coloré
+        doc.setTextColor(0, 0, 0);
+        let scoreColor;
+        let scoreLabel;
+        if (currentTotalScore >= 90) {
+            scoreColor = [16, 185, 129];
+            scoreLabel = 'Excellent';
+        } else if (currentTotalScore >= 75) {
+            scoreColor = [9, 104, 172];
+            scoreLabel = 'Bon';
+        } else if (currentTotalScore >= 60) {
+            scoreColor = [245, 158, 11];
+            scoreLabel = 'Moyen';
+        } else if (currentTotalScore >= 40) {
+            scoreColor = [249, 115, 22];
+            scoreLabel = 'Faible';
+        } else {
+            scoreColor = [239, 68, 68];
+            scoreLabel = 'Mauvais';
+        }
+
+        // Encadré du score
+        doc.setFillColor(...scoreColor);
+        doc.roundedRect(margin, y, contentWidth, 25, 3, 3, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Score Global: ${currentTotalScore}/100 - ${scoreLabel}`, pageWidth / 2, y + 16, { align: 'center' });
+
+        y += 35;
+
+        // Catégories (couleurs alignées sur l'analyseur)
+        const categories = [
+            { key: 'content', name: 'Contenu et Spam', color: [9, 104, 172] },
+            { key: 'images', name: 'Images et Médias', color: [9, 104, 172] },
+            { key: 'links', name: 'Liens et CTA', color: [9, 104, 172] },
+            { key: 'performance', name: 'Performance', color: [9, 104, 172] },
+            { key: 'compliance', name: 'Conformité Légale', color: [9, 104, 172] }
+        ];
+
+        categories.forEach((category, catIndex) => {
+            const categoryData = currentResults[category.key];
+            if (!categoryData) return;
+
+            const score = Math.round((categoryData.score / categoryData.maxScore) * 100);
+
+            // Calculer l'espace total nécessaire pour la catégorie
+            let categoryHeight = 12 + 16; // En-tête + marge
+            categoryData.checks.forEach(check => {
+                const descLines = doc.splitTextToSize(check.description, contentWidth - 12);
+                categoryHeight += 6 + (descLines.length * 3.5) + 2;
+            });
+            categoryHeight += 5; // Marge finale
+
+            // Si la catégorie ne rentre pas, nouvelle page
+            if (y + categoryHeight > pageHeight - margin) {
+                doc.addPage();
+                y = margin;
+            }
+
+            // En-tête de catégorie avec couleur vive
+            doc.setFillColor(...category.color);
+            doc.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text(`${category.name}`, margin + 3, y + 8);
+            doc.text(`${score}%`, pageWidth - margin - 3, y + 8, { align: 'right' });
+
+            y += 16;
+
+            // Checks
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+
+            categoryData.checks.forEach((check, checkIndex) => {
+                // Icône et titre (utiliser des caractères simples sans emojis)
+                const icon = check.pass ? 'OK' : 'X';
+                const iconColor = check.pass ? [16, 185, 129] : [239, 68, 68];
+
+                doc.setTextColor(...iconColor);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'bold');
+                doc.text(icon, margin + 2, y);
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text(check.title, margin + 10, y);
+                y += 5;
+
+                // Description
+                const descLines = doc.splitTextToSize(check.description, contentWidth - 12);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(60, 60, 60);
+                descLines.forEach(line => {
+                    doc.text(line, margin + 10, y);
+                    y += 3.5;
+                });
+
+                y += 2;
+            });
+
+            y += 5;
+        });
+
+        // Recommandations prioritaires
+
+        // Collecter les recommandations (checks qui ont échoué)
+        const recommendations = [];
+        Object.values(currentResults).forEach(category => {
+            category.checks.forEach(check => {
+                if (!check.pass) {
+                    let priority = 'low';
+                    const titleLower = check.title.toLowerCase();
+
+                    // Déterminer la priorité
+                    const highPriority = ['désinscription', 'adresse postale', 'alt', 'https', 'gmail', '102kb', 'obligatoire'];
+                    const mediumPriority = ['css externe', 'doctype', 'ratio texte', 'javascript', 'base64', 'pre-header', 'lisible sans images'];
+
+                    if (highPriority.some(p => titleLower.includes(p.toLowerCase()))) priority = 'high';
+                    else if (mediumPriority.some(p => titleLower.includes(p.toLowerCase()))) priority = 'medium';
+
+                    recommendations.push({
+                        text: check.description,
+                        priority: priority
+                    });
+                }
+            });
+        });
+
+        // Trier par priorité
+        recommendations.sort((a, b) => {
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+
+        // Calculer la hauteur de la section recommandations
+        let recoHeight = 12 + 16; // En-tête + marge
+        if (recommendations.length === 0) {
+            recoHeight += 10;
+        } else {
+            recommendations.slice(0, 10).forEach(rec => {
+                const recLines = doc.splitTextToSize(rec.text, contentWidth - 25);
+                recoHeight += 8 + (recLines.length * 3.5) + 5;
+            });
+        }
+
+        // Si la section ne rentre pas, nouvelle page
+        if (y + recoHeight > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+        }
+
+        // En-tête de la section
+        doc.setFillColor(9, 104, 172);
+        doc.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Recommandations', margin + 3, y + 8);
+
+        y += 16;
+
+        if (recommendations.length === 0) {
+            doc.setTextColor(16, 185, 129);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Aucune recommandation - Votre email respecte toutes les bonnes pratiques !', margin + 3, y);
+            y += 10;
+        } else {
+            // Afficher les recommandations (max 10)
+            recommendations.slice(0, 10).forEach((rec, index) => {
+                // Définir les couleurs selon la priorité
+                let badgeColor, bgColor;
+                if (rec.priority === 'high') {
+                    badgeColor = [239, 68, 68];
+                    bgColor = [254, 226, 226]; // Rouge clair
+                } else if (rec.priority === 'medium') {
+                    badgeColor = [245, 158, 11];
+                    bgColor = [254, 243, 199]; // Orange clair
+                } else {
+                    badgeColor = [9, 104, 172];
+                    bgColor = [231, 241, 252]; // Bleu clair
+                }
+
+                // Calculer la hauteur du bloc
+                const recLines = doc.splitTextToSize(rec.text, contentWidth - 25);
+                const textHeight = recLines.length * 3.5;
+                const blockHeight = textHeight + 6;
+
+                // Fond coloré pour tout le bloc
+                doc.setFillColor(...bgColor);
+                doc.roundedRect(margin, y, contentWidth, blockHeight, 1, 1, 'F');
+
+                // Calculer la position verticale centrée pour le badge
+                const badgeY = y + (blockHeight / 2) - 2;
+
+                // Badge de priorité
+                doc.setFillColor(...badgeColor);
+                doc.roundedRect(margin + 2, badgeY, 20, 6, 1, 1, 'F');
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'bold');
+                doc.text(rec.priority.toUpperCase(), margin + 12, badgeY + 4, { align: 'center' });
+
+                // Texte de la recommandation centré verticalement
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+
+                const textStartY = y + (blockHeight - textHeight) / 2 + 3;
+                recLines.forEach((line, lineIndex) => {
+                    doc.text(line, margin + 25, textStartY + (lineIndex * 3.5));
+                });
+
+                y += blockHeight + 4;
+            });
+        }
+
+        y += 5;
+
+        // Footer sur chaque page
+        const pageCount = doc.internal.getNumberOfPages();
+        const generatedDate = `Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`;
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.text(
+                `${generatedDate} - Page ${i}/${pageCount}`,
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
+        }
+
+        // Télécharger
+        const filename = `rapport-email-${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+
+    } catch (error) {
+        console.error('Erreur lors de l\'export PDF:', error);
+        alert('Erreur lors de la génération du PDF');
+    } finally {
+        // Réactiver le bouton
+        exportPdfBtn.disabled = false;
+        exportPdfBtn.textContent = 'Exporter en PDF';
+    }
+});

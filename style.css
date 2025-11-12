@@ -24,8 +24,8 @@ body {
 
 header {
     text-align: center;
-    margin-bottom: 60px;
-    padding: 40px 0;
+    margin-bottom: 40px;
+    padding: 20px 0;
 }
 
 header h1 {
@@ -60,7 +60,7 @@ header p {
 .upload-area {
     border: 2px dashed #0968AC;
     border-radius: 16px;
-    padding: 60px 40px;
+    padding: 40px 40px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -80,8 +80,8 @@ header p {
 }
 
 .upload-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
+    font-size: 3rem;
+    margin-bottom: 12px;
 }
 
 .upload-area h2 {
@@ -147,14 +147,14 @@ header p {
 .btn-analyze {
     background: #0968AC;
     color: white;
-    padding: 12px 28px;
+    padding: 16px 36px;
     border: none;
     border-radius: 52px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
 }
 
 .btn-analyze:hover {
@@ -276,7 +276,7 @@ header p {
 
 .analysis-details > h2 {
     color: #0968AC;
-    margin-bottom: 32px;
+    margin-bottom: 20px;
     font-size: 32px;
     font-weight: 700;
 }
@@ -427,7 +427,7 @@ header p {
 
 .recommendations h2 {
     color: #0968AC;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     font-size: 32px;
     font-weight: 700;
 }
@@ -436,17 +436,30 @@ header p {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    border-left: 4px solid;
-    background: #F7FBFE;
+    padding: 16px;
+    margin-bottom: 12px;
     border-radius: 12px;
+    border: 1px solid;
     transition: all 0.2s ease;
+}
+
+.recommendation-item.high {
+    background: #FEE2E2;
+    border-color: #EF4444;
+}
+
+.recommendation-item.medium {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+}
+
+.recommendation-item.low {
+    background: #E7F1FC;
+    border-color: #0968AC;
 }
 
 .recommendation-item:hover {
     transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .recommendation-priority {
@@ -601,4 +614,26 @@ input[type="file"]:focus + .upload-area {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #075F9E;
+}
+
+/* Bouton Export PDF */
+.btn-export-pdf {
+    padding: 10px 20px;
+    background: transparent;
+    color: #0968AC;
+    border: 1px solid #0968AC;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-export-pdf:hover {
+    background: #0968AC;
+    color: #FFFFFF;
+}
+
+.btn-export-pdf:active {
+    transform: scale(0.98);
 }

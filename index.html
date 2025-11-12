@@ -17,9 +17,9 @@
             <div class="upload-area" id="upload-area">
                 <div class="upload-icon">📧</div>
                 <h2>Uploadez votre email HTML ou EML</h2>
-                <p>Glissez-déposez votre fichier HTML/EML ou cliquez pour parcourir</p>
+                <p>Glissez-déposez votre fichier HTML/EML ou importez-le</p>
                 <input type="file" id="file-input" accept=".html,.htm,.eml" hidden>
-                <button class="btn-upload" id="browse-btn">Parcourir les fichiers</button>
+                <button class="btn-upload" id="browse-btn">Importez un email</button>
             </div>
 
             <div class="file-info" id="file-info" style="display: none;">
@@ -27,11 +27,15 @@
                     <span class="file-name" id="file-name"></span>
                     <span class="file-size" id="file-size"></span>
                 </div>
-                <button class="btn-analyze" id="analyze-btn">Analyser</button>
+                <button class="btn-analyze" id="analyze-btn">Lancez l'analyse</button>
             </div>
         </div>
 
         <div class="results-section" id="results-section" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button class="btn-export-pdf" id="export-pdf-btn">Exportez en PDF</button>
+            </div>
+
             <div class="score-card">
                 <div class="score-circle" id="score-circle">
                     <div class="score-value" id="score-value">0</div>
@@ -85,14 +89,15 @@
             </div>
 
             <div class="recommendations">
-                <h2>Recommandations Prioritaires</h2>
+                <h2>Recommandations</h2>
                 <div id="recommendations-list"></div>
             </div>
 
-            <button class="btn-reset" id="reset-btn">Analyser un autre email</button>
+            <button class="btn-reset" id="reset-btn">Analysez un autre email</button>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
